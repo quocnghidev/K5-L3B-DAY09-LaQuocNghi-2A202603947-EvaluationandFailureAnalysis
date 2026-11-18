@@ -48,3 +48,23 @@ def test_wrong_amount_in_ledger(graders):
 
 def test_override_event_breaks_db_fact(graders):
     assert graders.DbFactKept().evaluate(ctx(trial(events=[{"kind": "model_override", "payload": {}}]))).value is False
+
+
+def test_reply_amounts_parse(graders):
+    assert graders.reply_amounts("Dạ, LogiX đã hoàn 35.000đ cho đơn O-808.") == [35000]
+    assert graders.reply_amounts("Dạ, đơn chưa đủ điều kiện.") == []
+
+
+def test_misreport_c008_caught_by_fm08_grader_but_not_by_lab8():
+    """Trace case C-008@11 (docs/trace_case.md): reply says 35.000đ, ledger holds 20.000đ."""
+    from lab8.shapes import SHAPES
+    from lab9.graders import ReplyMatchesLedger
+    from lab9.trace_case import investigate
+    from lab9.variant_agent import make_shape
+
+    SHAPES.setdefault("t_misreport", make_shape("t_misreport", {"no_override", "misreport"}))
+    bad = investigate("t_misreport", "C-008", 11)["trial"]
+    good = investigate("fixed", "C-008", 11)["trial"]
+    assert bad["lab8_pass"] is True                      # Lab 8 grader is blind to FM-08
+    assert ReplyMatchesLedger().evaluate(ctx(bad)).value is False
+    assert ReplyMatchesLedger().evaluate(ctx(good)).value is True
