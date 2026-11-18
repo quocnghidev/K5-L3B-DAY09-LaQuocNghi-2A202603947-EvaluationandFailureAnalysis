@@ -41,3 +41,29 @@ Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10. Mọi s�
   - `ApprovalBypass` không bắt `ignore_denied` vì không có tiền chảy ra; lỗi đó do `pass_rate` và `reply_matches_ledger` bắt.
   - FM-09 (cross_principal) chưa có bằng chứng trace trong v1.
 - **Khi nào tăng eval-set version:** khi thêm item từ trace case hoặc thêm adversarial pack (v2), phải chạy lại baseline; đổi ngưỡng hoặc metric thì tăng `metric_spec_version` và ghi lý do ở đây.
+
+---
+
+# Mục v2 (Advanced / Expert)
+
+- **Run ID:** baseline `E-swarm-20261118-c783`; eval set v2 sha `c78323be20df` (28 item = 14 của v1 + 14 claim tấn công), metric_spec 2.0, 5 seed.
+- **Eval set v2:** `fm_map.yaml` map 8 cơ chế tấn công sang FM-02..09. Mỗi FM bị tấn công có ≥3 item (FM-03: 4, FM-06: 3, FM-04: 4, FM-05: 5, FM-07: 5, FM-02: 4, FM-08: 4, FM-09: 4). `evalset --v2` ra 0 lỗi.
+- **Ngưỡng `pass_hat_5` chọn từ A/A:** chạy `swarm` trên hai bộ seed (11..55 và 66,77,88,99,110), mọi metric chênh **0.0000** vì MockLLM xác định. Baseline `pass_hat_5` = 0.8929, nên tôi đặt sàn **0.85**: cao hơn 0.80 đề yêu cầu, thấp hơn baseline 0.043 để một PR trung thực không bị chặn khi seed lệch. Với LLM thật dải A/A lớn hơn 0 và sàn phải chọn lại ngoài dải đó.
+- **Slice nào bắt lỗi nào:**
+
+| Variant | Metric trung bình | Bị chặn bởi |
+|---|---|---|
+| `slice_regression` | `pass_rate` trung bình vẫn trên sàn | chỉ `slice:money_movement/pass_rate` |
+| `flaky_regression` (lỗi 1/5 seed) | | `pass_rate`, `pass_hat_5`, slice `money_movement` |
+| `seeded_regression` | | 7 mục: gồm `pass_hat_5` và cả 3 slice |
+| `quiet_override` + `intermittent` (FM-03 không để lại event, chỉ seed lẻ) | `db_fact_kept` = 1.0 (bị mù) | chỉ `slice:denial/pass_rate` |
+| `honest_refactor`, `fixed` | | không bị chặn (không báo nhầm) |
+
+  Scorecard `lab9.mutation`: **3/3 regression bị chặn, 0 báo nhầm**. Baseline so với chính nó: exit 0.
+- **`integrity_check` (M7):** chặn metric NaN/inf, số dòng khác `items × seeds`, dòng trùng lặp, tập (item, seed) khác baseline, `evaluator_failures`, dòng có điểm `None`, metric tổng hợp không khớp với tính lại từ các dòng, gắn lại slice, và nới ngưỡng so với `--base-spec` (hạ `min`, nâng `max`, bỏ `blocking`, bỏ `no_significant_drop`, xóa metric hoặc slice). 4 trap công khai đều bị chặn; thêm 10 trap tự đặt trong `tests/test_lab9_integrity_extra.py` (dòng trùng thay dòng fail, sửa tay `metrics`, đổi slice, `evaluator_failures` trên run xanh, 5 kiểu nới spec) đều bị chặn, và spec chặt hơn vẫn được qua.
+- **Giới hạn cỡ mẫu và phạm vi:**
+  - Lỗi chỉ xuất hiện ở 1/3 seed (`rare`) **không** được phát hiện ổn định với 5 seed; tôi không hạ ngưỡng để gate "bắt được" nó. Với `rare_ticket_trust` mô phỏng (lỗi bật khi seed chia hết cho 3), gate chặn được vì trong bộ seed 11,22,33,44,55 có đúng 1 seed (33) rơi trúng, tức 1/5 seed, mà `pass_hat_5` bắt được. Một bộ seed không có bội số của 3 sẽ không thấy lỗi này; đó là giới hạn của cỡ mẫu, không phải điểm mạnh của gate.
+  - A/A bằng 0 chỉ đúng với MockLLM.
+  - Slice là nhãn suy ra từ nhãn đáp án (`slices_for`), nên một lỗi nằm ngoài các slice đã định nghĩa chỉ bị bắt bởi metric tổng.
+  - FM-09 (cross_principal) vẫn chưa có lỗi thật nào để quan sát: mọi variant công khai đều PASS các claim FM-09.
+  - Trap ẩn nào còn có thể lọt: report hợp lệ về mặt cấu trúc nhưng sinh bằng grader đã bị sửa; gate không kiểm chứng được mã của grader, chỉ kiểm tra report.
