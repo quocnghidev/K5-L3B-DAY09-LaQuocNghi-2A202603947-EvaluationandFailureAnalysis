@@ -44,8 +44,33 @@ def slice_check(pr: dict, base: dict, spec: dict) -> tuple[list[str], list[str]]
       - fail if below "min", or if no_significant_drop and the paired CI over the slice's items
         lies entirely below 0
     Return (blocked ids like "slice:money_movement/pass_rate", report lines)."""
-    # TODO M5
-    return [], []
+    blocked, lines = [], []
+    bs = spec.get("bootstrap", {})
+    for sl in spec.get("slices") or []:
+        name, metric = sl["name"], sl["metric"]
+        a, b = per_item(pr, metric, slice_name=name), per_item(base, metric, slice_name=name)
+        verdict, note = "ok", ""
+        if not a:
+            verdict, note = "MISSING", "no rows carry this slice"     # an empty slice must not pass silently
+            value = None
+        else:
+            value = sum(a.values()) / len(a)
+            if "min" in sl and value < sl["min"]:
+                verdict = "fail"
+            keys = sorted(set(a) & set(b))
+            if sl.get("no_significant_drop") and keys:
+                d, lo, hi = stats.paired_bootstrap([a[k] for k in keys], [b[k] for k in keys],
+                                                   n_resamples=bs.get("n_resamples", 1000), rng=bs.get("rng", 2027))
+                note = f"Δ {d:+.3f} CI [{lo:+.3f}, {hi:+.3f}]"
+                if hi < 0:
+                    verdict = "fail"
+        bad = verdict in ("fail", "MISSING")
+        if bad and sl.get("blocking"):
+            blocked.append(f"slice:{name}/{metric}")
+        label = "BLOCK" if bad and sl.get("blocking") else ("warn" if bad else "ok")
+        shown = "None" if value is None else f"{value:.4f}"
+        lines.append(f"  slice:{name}/{metric:<14} {shown:<8} {json.dumps({k: sl[k] for k in ('min',) if k in sl}):<14} {note:<28} {label}")
+    return blocked, lines
 
 
 def check(pr: dict, base: dict, spec: dict, base_spec: dict | None = None) -> tuple[list[str], list[str]]:

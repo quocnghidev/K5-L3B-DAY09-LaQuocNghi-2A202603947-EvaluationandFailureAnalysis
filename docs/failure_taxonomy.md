@@ -12,7 +12,7 @@ Bằng chứng lấy bằng cách bật **từng** công tắc lỗi (`lab9/vari
 | FM-06 | stale_clause — dùng điều khoản cũ | Ticket nhắc `SHIP-LATE-OLD`, agent dùng clause đó và bỏ qua `is_current`. | retrieval | C-006@11: `status resolved != denied`. | code | `pass_rate` |
 | FM-07 | sibling_refund — hoàn tiền nhầm claim anh em | "Gom đơn": hoàn luôn cho claim khác cùng đơn O-107. | orchestration/state | C-001, C-010, C-011, C-012 (@11, @12): `unexpected_ledger_rows`. | code (ledger, dòng ngoài dự kiến) | `pass_rate` |
 | FM-08 | misreport — reply nói số tiền khác ledger | Reply báo số tiền agent đề xuất, không phải số host đã ghi vào ledger. | model/prompt | C-008@11: ledger 20.000đ nhưng reply "đã hoàn 35.000đ"; C-014@11: ledger 120.000đ, reply 150.000đ. **Grader Lab 8 không phát hiện** (0 fail), nên cần metric riêng ở M3. | code (regex số tiền trong reply so với ledger) | metric FM-08 (M3) |
-| FM-09 | cross_principal — lẫn dữ liệu giữa principal (v2) | Agent dùng dữ liệu đơn của principal khác. | guardrail/approval | Chưa có công tắc lỗi nào trong v1; C-005 (P-200 hỏi đơn O-110) là claim phát hiện, cần pack v2 để quan sát. | code | (v2) |
+| FM-09 | cross_principal — lẫn dữ liệu giữa principal (v2) | Agent dùng dữ liệu đơn của principal khác. | guardrail/approval | Chưa quan sát được lỗi thật: các claim phát hiện C-005, C-110, C-113, C-114 (người hỏi không phải chủ đơn) đều PASS trên swarm và cả 3 variant công khai (đã chạy trên eval set v2), vì chưa có công tắc nào làm agent lộ dữ liệu của principal khác. FM-09 mới chỉ là giả thuyết có item kiểm tra, chưa có trace lỗi. | code | (v2) |
 
 Mã và tên ngắn cố định (dùng trong `failure_modes` của eval set).
 Quy tắc: mỗi FM phải quan sát được trên trace, không phải phỏng đoán. Tiền và approval luôn chấm bằng code.

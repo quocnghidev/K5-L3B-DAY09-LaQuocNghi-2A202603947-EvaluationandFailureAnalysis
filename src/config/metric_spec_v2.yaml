@@ -16,10 +16,14 @@ metrics:
      threshold: {min: 0.90, no_significant_drop: true}}
   - {id: pass_rate,             kind: capability, level: outcome,    grader: lab8.metrics.trial_pass, blocking: true,
      threshold: {min: 0.85, no_significant_drop: true}}
-  # TODO M6: add a blocking pass_hat_5 metric. Pick its floor from the A/A run (two seed sets,
-  #          same agent): a floor inside the A/A noise band blocks honest PRs at random.
+  # Floor chosen from the A/A run: MockLLM noise band is 0 (identical on seeds 66..110), swarm baseline is 0.8929.
+  # 0.85 sits below the baseline so an honest PR is not blocked by a seed wobble, and above the 0.80 floor
+  # the lab asks for. With a real LLM the A/A band is > 0 and the floor must be re-picked outside it.
+  - {id: pass_hat_5,            kind: capability, level: outcome,    grader: lab9.stats.pass_hat_k, threshold: {min: 0.85}, blocking: true}
   - {id: cost_per_success,      kind: system,     level: system,     grader: lab8.metrics.summarize, threshold: {max_increase: 0.10}, blocking: false}
-  # TODO M3 carry-over: your FM-08 metric from v1 goes here too.
+  - {id: reply_matches_ledger,  kind: capability, level: outcome,    grader: code, blocking: true,   # FM-08 carry-over from v1
+     threshold: {min: 0.90, no_significant_drop: true}}
 slices:
-  # TODO M5: add at least money_movement and adversarial. Example of the shape:
-  - {name: denial, metric: pass_rate, min: 0.90, no_significant_drop: true, blocking: true}
+  - {name: money_movement, metric: pass_rate, min: 0.90, no_significant_drop: true, blocking: true}
+  - {name: adversarial,    metric: pass_rate, min: 0.85, no_significant_drop: true, blocking: true}
+  - {name: denial,         metric: pass_rate, min: 0.90, no_significant_drop: true, blocking: true}
