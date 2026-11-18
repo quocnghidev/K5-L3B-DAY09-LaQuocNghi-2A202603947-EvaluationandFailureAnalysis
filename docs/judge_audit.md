@@ -12,7 +12,7 @@ Ma trận nhầm lẫn (tp/fp/fn/tn): tone_ok 24/4/6/66; helpful 9/0/21/70.
 ## ≥5 case audit thủ công (tone_ok, 10 bất đồng; chọn 6 đại diện)
 | # | Case | Judge nói | Người nói | Ai đúng? | Ghi chú và hành động sửa rubric |
 |---|---|---|---|---|---|
-| 1 | H-081 "đơn O-107 chưa đủ điều kiện hoàn theo chính sách hiện hành ạ" | FAIL | PASS | **Judge** | Câu từ chối lịch sự, đúng giọng. Nhãn người đọc nhầm ticket. **Sửa nhãn H-081 thành FAIL-không, tức PASS là đúng nhưng cần kiểm lại**; ghi trong CSV note rằng nhãn người đã bị đính chính. Thêm vào rubric: "từ chối đúng chính sách không bị coi là thiếu thiện chí". |
+| 1 | H-081 "đơn O-107 chưa đủ điều kiện hoàn theo chính sách hiện hành ạ" | FAIL | PASS | **Judge** | Đơn O-107 đủ điều kiện hoàn (claim C-001 hoàn 35.000đ), nên từ chối là sai sự thật dù giọng lịch sự. Người gắn nhãn đọc nhầm ticket. **Hành động:** sửa nhãn người H-081 thành FAIL; rubric ghi rõ "lịch sự không bù được cho nội dung sai". Ca này cũng là lỗi nội dung, nên thuộc grader code chứ không phải judge tone.
 | 2 | H-042 "đã hoàn 120.000đ. Tiền về trong 3–5 ngày ạ." | FAIL | PASS | **Người** | Ngắn nhưng đủ ý. Judge phạt vì "thiếu xin lỗi". Rubric thêm: xin lỗi chỉ bắt buộc khi claim có lỗi của LogiX, không bắt buộc ở mọi reply. |
 | 3 | H-051 "đã refund 90.000đ" | FAIL | PASS | **Người** | CS LogiX cho phép từ "refund". Rubric thêm: thuật ngữ nghiệp vụ tiếng Anh trong danh sách cho phép không bị trừ. |
 | 4 | H-008 "Em đã hoàn tiền cho anh rồi nha" | PASS | FAIL | **Người** | Xưng "em" và "nha" quá suồng sã. Rubric thêm ví dụ âm: kết thúc bằng "nha/nhé" và xưng "bạn/em" với khách là FAIL. |
