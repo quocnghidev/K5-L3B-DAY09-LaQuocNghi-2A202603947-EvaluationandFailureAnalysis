@@ -14,26 +14,46 @@ POS = "FAIL"   # the judge's job is to FIND failures, so FAIL is the positive cl
 
 def confusion(human: Sequence[str], judge: Sequence[str]) -> dict[str, int]:
     """tp/fp/fn/tn with FAIL as positive."""
-    # TODO M2
-    raise NotImplementedError
+    if len(human) != len(judge):
+        raise ValueError("human and judge must have the same length")
+    pairs = list(zip(human, judge))
+    return {
+        "tp": sum(h == POS and j == POS for h, j in pairs),
+        "fp": sum(h != POS and j == POS for h, j in pairs),
+        "fn": sum(h == POS and j != POS for h, j in pairs),
+        "tn": sum(h != POS and j != POS for h, j in pairs),
+    }
 
 
 def precision_recall(human: Sequence[str], judge: Sequence[str]) -> tuple[float, float]:
-    # TODO M2: precision = tp/(tp+fp), recall = tp/(tp+fn); return 0.0 when the denominator is 0
-    raise NotImplementedError
+    cm = confusion(human, judge)
+    flagged, actual = cm["tp"] + cm["fp"], cm["tp"] + cm["fn"]
+    precision = cm["tp"] / flagged if flagged else 0.0
+    recall = cm["tp"] / actual if actual else 0.0
+    return precision, recall
 
 
 def cohen_kappa(human: Sequence[str], judge: Sequence[str]) -> float:
     """kappa = (p_o - p_e) / (1 - p_e). Raise ValueError when undefined (p_e == 1):
     a constant judge has no signal and must FAIL calibration, not pass on a technicality."""
-    # TODO M2
-    raise NotImplementedError
+    cm = confusion(human, judge)
+    n = sum(cm.values())
+    if n == 0:
+        raise ValueError("kappa undefined: no data")
+    p_o = (cm["tp"] + cm["tn"]) / n
+    # chance agreement: both say FAIL by luck + both say PASS by luck
+    p_e = ((cm["tp"] + cm["fn"]) * (cm["tp"] + cm["fp"]) + (cm["fp"] + cm["tn"]) * (cm["fn"] + cm["tn"])) / (n * n)
+    if p_e == 1:
+        raise ValueError("kappa undefined: chance agreement is 1 (constant labels)")
+    return (p_o - p_e) / (1 - p_e)
 
 
 def rogan_gladen(observed_rate: float, sensitivity: float, specificity: float) -> float:
     """Correct an observed failure rate for judge error; clip to [0, 1]."""
-    # TODO M2: (p_obs + spec - 1) / (sens + spec - 1)
-    raise NotImplementedError
+    denom = sensitivity + specificity - 1
+    if denom <= 0:
+        raise ValueError("judge no better than chance (sensitivity + specificity <= 1)")
+    return min(1.0, max(0.0, (observed_rate + specificity - 1) / denom))
 
 
 def paired_bootstrap(a: Sequence[float], b: Sequence[float], *, n_resamples: int = 1000,
